@@ -1,6 +1,6 @@
-### Rarity: Discovering rare cell populations from single-cell imaging data
+# Rarity: Discovering rare cell populations from single-cell imaging data
 
-This repository implements Rarity, a hybrid clustering framework with the goal to identify potentially novel rare clusters of cells. 
+This repository implements *Rarity*, a hybrid clustering framework with the goal to identify potentially novel rare clusters of cells. 
 
 
 ### Getting started
