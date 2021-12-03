@@ -28,7 +28,7 @@ Y <- as.matrix(df)
 
 This is similar to the example shown in Figure 1
 
-![](examples/fig/fig1A.png)
+![](examples/fig/fig1a_ground_truth.png)
 
 where we have 5 cell types. 
 
@@ -43,10 +43,10 @@ We can now visualise the inferred binary signatures
 ```
 plot_binary_signatures(m, n_cells = 30)
 ```
-![Figure 1A](examples/fig/synthetic_heatmap1.png)
+![](examples/fig/synthetic_heatmap1.png)
 
 and we can also plot the heatmap of the observed marker intensities, splitting the rows according to the inferred Rarity clusters
 ```
 plot_heatmap_with_observations(Y, m, n_cells = 30)
 ```
-![Figure 1A](examples/fig/synthetic_heatmap2.png)
+![](examples/fig/synthetic_heatmap2.png)
