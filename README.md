@@ -28,7 +28,7 @@ Y <- as.matrix(df)
 
 This is similar to the example shown in Figure 1
 
-![Figure 1A](examples/fig/fig1A.png)
+![](examples/fig/fig1A.png)
 
 where we have 5 cell types. 
 
