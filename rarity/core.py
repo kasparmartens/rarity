@@ -12,8 +12,11 @@ class RelaxedBernoulliAutoEncoder(nn.Module):
     Autoencoder with a binary latent space, where dim(z) == dim(data),
     fitted via continuous relaxations of binary random variables
     """
-    def __init__(self, data_dim, optimise_params=False):
+    def __init__(self, data_dim, optimise_params=False, seed=None):
         super().__init__()
+        
+        if seed is not None:
+            torch.manual_seed(seed)
 
         self.optimise_params = optimise_params
 
@@ -73,7 +76,7 @@ class RelaxedBernoulliAutoEncoder(nn.Module):
         return Normal(loc=mu, scale=sigma).log_prob(Y)
 
 
-def fit_Rarity(Y, n_iter=20000, batch_size=1024, optimise_params=False, verbose=True):
+def fit_Rarity(Y, n_iter=20000, batch_size=1024, optimise_params=False, seed=None, verbose=True):
     """
     Procedure for fitting the Rarity clustering model.
     :param Y: The observed expression matrix with cells in rows and genes in columns. We assume the intensities have been scaled to [0, 1].
@@ -87,7 +90,7 @@ def fit_Rarity(Y, n_iter=20000, batch_size=1024, optimise_params=False, verbose=
     N = Y.shape[0]
 
     temperature_grid = torch.linspace(4.0, 0.2, steps=n_iter)
-    m = RelaxedBernoulliAutoEncoder(data_dim=Y.shape[1], optimise_params=optimise_params)
+    m = RelaxedBernoulliAutoEncoder(data_dim=Y.shape[1], optimise_params=optimise_params, seed=seed)
     opt = torch.optim.Adam(m.parameters(), lr=1e-3)
 
     for i in range(n_iter):
