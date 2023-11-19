@@ -50,3 +50,7 @@ and we can also plot the heatmap of the observed marker intensities, splitting t
 plot_heatmap_with_observations(Y, m, n_cells = 30)
 ```
 ![](examples/fig/synthetic_heatmap2.png)
+
+### Full example
+
+For a full example with various clustering methods such as Phenograph and FlowSOM, please see the [synthetic example Rmd notebook](example_synthetic.md)
