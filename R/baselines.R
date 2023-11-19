@@ -31,13 +31,10 @@ Phenograph_metaclustering <- function(Y, k = 10, k_final = 5){
   cl_meta[cl]
 }
 
-Seurat_UMAP <- function(Y){
-  rownames(Y) <- 1:nrow(Y)
-  
-  seurat_object <- Seurat::CreateSeuratObject(t(Y))
-  seurat_object <- Seurat::ScaleData(seurat_object)
-  
-  seurat_umap <- Seurat::RunUMAP(seurat_object, features = colnames(Y), seed.use = 2, metric="euclidean")
-  
-  data.frame(seurat_umap@reductions$umap@cell.embeddings)
+
+Seurat_UMAP <- function(Y, seed=1){
+  # use Seurat defaults for UMAP
+  mat <- uwot::umap(Y, n_neighbors = 30, min_dist = 0.3, metric = "euclidean", seed=seed)
+  data.frame(UMAP_1 = mat[, 1], UMAP_2 = mat[, 2])
 }
+

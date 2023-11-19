@@ -5,20 +5,20 @@ rmatnorm <- function(mean_mat, sd_mat){
   matrix(eps, nrow(mean_mat), ncol(mean_mat))
 }
 
-generate_synthetic_data <- function(marker_mat, n_cells){
+generate_synthetic_data <- function(marker_mat, n_cells, noise_sd1 = 0.03, noise_sd2 = 0.18){
   assertthat::assert_that(nrow(marker_mat) == length(n_cells))
   
   Y <- do.call("rbind", lapply(1:nrow(marker_mat), function(i){
     binary_exprs <- t(replicate(n_cells[i], marker_mat[i, ]))
     epsilon <- rnorm(ncol(binary_exprs) * nrow(binary_exprs))
     mean <- 0.05 + 0.5 * binary_exprs
-    sd <- 0.03 * (binary_exprs == 0) + 0.18 * (binary_exprs == 1)
+    sd <- noise_sd1 * (binary_exprs == 0) + noise_sd2 * (binary_exprs == 1)
     exprs <- rmatnorm(mean, sd)
     exprs[exprs < 0] <- 0
     exprs[exprs > 1] <- 0.99
     exprs
   }))
-  colnames(Y) <- paste0("marker", 1:ncol(Y))
+  colnames(Y) <- paste0("marker_", 1:ncol(Y))
   Y
 }
 
@@ -42,7 +42,7 @@ rownames(marker_mat) <- sprintf("cluster %d, # cells = %d", 1:length(n_cells), n
 colnames(marker_mat) <- sprintf("gene %s", 1:ncol(marker_mat))
 
 set.seed(1)
-Y <- generate_synthetic_data(marker_mat, n_cells)
+Y <- generate_synthetic_data(marker_mat, n_cells, noise_sd1 = 0.02, noise_sd2 = 0.12)
 true_cl <- rep(1:nrow(marker_mat), n_cells)
 
 write_csv(data.frame(Y), "data/synthetic1.csv")

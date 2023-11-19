@@ -1,4 +1,3 @@
-`%not in%` <- purrr::negate(`%in%`)
 
 plot_binary_signatures <- function(rarity, n_cells = 30, subset_clusters = NULL, subset_features = NULL, cluster_columns = TRUE, ...){
   if(is.null(subset_clusters)){
@@ -75,61 +74,87 @@ boxplot_diffexp_selected_clusters <- function(mat, cl){
     theme(legend.position = "none")
 }
 
-mylog <- function(p) ifelse(p==0, 0, log(p))
 
-entropy <- function(x){
-  probs <- x / sum(x)
-  -sum(probs * mylog(probs))
+plot_UMAP_with_highlighted_clusters <- function(cl, true_cl, df_umap, shuffle_colors = FALSE, highlighted_clusters = NULL, subset_cells=1:length(true_cl)){
+  tbl <- table(cl, true_cl)
+  if(is.null(highlighted_clusters)){
+    argmax_idx <- apply(tbl, 2, which.max)[4:5]
+    highlighted_clusters <- rownames(tbl)[argmax_idx]
+  }
+  
+  
+  if(shuffle_colors){
+    df_umap <- df_umap %>% 
+      mutate(clusters = forcats::fct_shuffle(factor(cl)))
+  } else{
+    df_umap <- df_umap %>% 
+      mutate(clusters = factor(cl))
+  }
+  
+  df_umap[subset_cells, ] %>% 
+    ggplot(aes(UMAP_1, UMAP_2, col=clusters)) +
+    geom_point(aes(alpha=clusters %in% highlighted_clusters)) +
+    scale_alpha_manual(guide="none", values = c("TRUE" = 0.75, "FALSE" = 0.1)) +
+    labs(x = expression(UMAP[1]), y = expression(UMAP[2]), col="Clusters") +
+    theme_classic()
 }
 
-
-helper_metrics <- function(inferred, true){
+helper_plot_rarity <- function(rarity, true_cl, df_umap, n_cells = 30){
+  cl <- data.frame(cl = rarity$cluster_allocations) %>% 
+    mutate(cl = case_when(
+      cl == 1 ~ "A",
+      cl == 2 ~ "B",
+      cl == 3 ~ "C",
+      TRUE ~ sprintf("cluster %s", cl)
+    )) %>% 
+    pull(cl)
+  tiny_clusters <- which(rarity$counts < n_cells)
+  selected_cells <- (rarity$cluster_allocations %not in% tiny_clusters)
+  highlighted_clusters <- paste("cluster", 4:5)
   
-  homogeneity <- clevr::homogeneity(true, inferred)
-  completeness <- clevr::completeness(true, inferred)
-  
-  list(
-    homogeneity = homogeneity,
-    completeness = completeness,
-    v_measure = 2 * homogeneity * completeness / (homogeneity + completeness)
-  )
+  df_umap %>% 
+    mutate(clusters = factor(cl)) %>% 
+    filter(selected_cells) %>% 
+    ggplot(aes(UMAP_1, UMAP_2, col=clusters)) +
+    geom_point(aes(alpha = clusters %in% highlighted_clusters)) +
+    scale_alpha_manual(guide="none", values = c("TRUE" = 0.75, "FALSE" = 0.1)) +
+    labs(x = expression(UMAP[1]), y = expression(UMAP[2]), col="Clusters") +
+    theme_classic() + 
+    scale_color_viridis_d(option = "magma")
 }
 
-helper_metrics_conditional <- function(freq_table, selected_cell_type){
-  # entropy K given C
-  entropy_K_given_C <- entropy(freq_table[, colnames(freq_table) == selected_cell_type])
-  entropy_K <- entropy(rep(1, nrow(freq_table))) #entropy(rowSums(freq_table))
-  # entropy C given argmax K
-  most_likely_k <- which.max(freq_table[, colnames(freq_table) == selected_cell_type])
-  entropy_C_given_K <- entropy(freq_table[most_likely_k, ])
-  entropy_C <- entropy(rep(1, ncol(freq_table))) #entropy(colSums(freq_table))
+helper_plot_UMAP_rare_cells <- function(df_umap, true_cl){
   
-  homogeneity <- 1.0 - entropy_C_given_K / entropy_C
-  completeness <- 1.0 - entropy_K_given_C / entropy_K
+  df_umap_with_labels <- df_umap %>% 
+    mutate(clusters = case_when(
+      true_cl == 1 ~ "cell type A",
+      true_cl == 2 ~ "cell type B",
+      true_cl == 3 ~ "cell type C",
+      true_cl == 4 ~ "cell type D \n(rare)",
+      true_cl == 5 ~ "cell type E (rare)"
+    ))
   
-  list(
-    homogeneity = homogeneity,
-    completeness = completeness,
-    v_measure = 2 * homogeneity * completeness / (homogeneity + completeness)
-  )
+  df_umap_with_labels_summarised <- df_umap_with_labels %>% 
+    group_by(clusters) %>% 
+    summarise(UMAP_1 = median(UMAP_1), UMAP_2 = median(UMAP_2)) %>% 
+    mutate(UMAP_2 = case_when(
+      clusters == "cell type B" ~ UMAP_2 + 1,
+      clusters == "cell type D \n(rare)" ~ UMAP_2 - 2.5,
+      clusters == "cell type E (rare)" ~ UMAP_2 + 1.7,
+      TRUE ~ UMAP_2
+    ))
+  
+  df_umap_with_labels %>% 
+    ggplot(aes(UMAP_1, UMAP_2, col=clusters, alpha = clusters)) +
+    geom_point() +
+    geom_label(aes(label=clusters), data = df_umap_with_labels_summarised, alpha=0.9, size=5, show.legend = FALSE) +
+    scale_color_viridis_d(direction = -1, end=0.9, option="magma") +
+    scale_alpha_manual(values = c("cell type A" = 0.4,
+                                  "cell type B" = 0.3,
+                                  "cell type C" = 0.3,
+                                  "cell type D \n(rare)" = 0.5,
+                                  "cell type E (rare)" = 0.75)) +
+    labs(x = expression(UMAP[1]), y = expression(UMAP[2]), col="Clusters", alpha="Clusters") +
+    theme_classic() +
+    theme(legend.position = "none")
 }
-
-
-Seurat_UMAP <- function(Y){
-  rownames(Y) <- 1:nrow(Y)
-  
-  seurat_object <- Seurat::CreateSeuratObject(t(Y))
-  seurat_object <- Seurat::ScaleData(seurat_object)
-  
-  seurat_umap <- Seurat::RunUMAP(seurat_object, features = colnames(Y), seed.use = 2, metric="euclidean")
-  
-  data.frame(seurat_umap@reductions$umap@cell.embeddings)
-}
-
-Phenograph_clustering <- function(Y, k = 30){
-  library(Rphenograph)
-  Rphenograph_out <- Rphenograph(Y, k=k)
-  cl <- membership(Rphenograph_out[[2]])
-  as.numeric(cl)
-}
-
