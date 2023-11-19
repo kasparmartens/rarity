@@ -54,3 +54,7 @@ plot_heatmap_with_observations(Y, m, n_cells = 30)
 ### Full example
 
 For a full example with various clustering methods such as Phenograph and FlowSOM, please see the [synthetic example Rmd notebook](example_synthetic.md)
+
+### Hamming Ball query
+
+For an example of Hamming Ball query, see [this Rmd notebook](example_hamming_ball_query.md)
