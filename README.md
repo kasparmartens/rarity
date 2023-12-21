@@ -1,7 +1,8 @@
 # Rarity: Discovering rare cell populations from single-cell imaging data
 
-This repository implements *Rarity*, a hybrid clustering framework with the goal to identify potentially novel rare clusters of cells. 
+This repository provides an implementation of [Rarity](https://doi.org/10.1093/bioinformatics/btad750), a hybrid clustering framework with the goal to identify potentially novel rare clusters of cells. See our [paper in Bioinformatics](https://doi.org/10.1093/bioinformatics/btad750) for more details. 
 
+![](examples/fig/banner_umap.png)
 
 ### Getting started
 
